@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: foodie-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: foodie
+      POSTGRES_PASSWORD: foodie
+      POSTGRES_DB: foodieapp
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U foodie -d foodieapp" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: foodie-api:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: foodie-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_USER: foodie
+      DB_PASSWORD: foodie
+      DB_NAME: foodieapp
+      DB_SSLMODE: disable
+      API_KEY: apitest
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
