@@ -16,6 +16,14 @@ services:
       timeout: 5s
       retries: 5
 
+  preprocess:
+    build:
+      context: .
+      dockerfile: Dockerfile.preprocess
+    container_name: foodie-preprocess
+    volumes:
+      - promodata:/data
+
   api:
     image: foodie-api:latest
     build:
@@ -33,9 +41,13 @@ services:
       DB_NAME: foodieapp
       DB_SSLMODE: disable
       API_KEY: apitest
+      VALID_CODES_PATH: /data/valid_codes.txt
+    volumes:
+      - promodata:/data:ro
     depends_on:
       db:
         condition: service_healthy
 
 volumes:
   pgdata:
+  promodata:
