@@ -1,14 +1,14 @@
 package domain
 
 type Order struct {
-	ID        string
-	Items     []OrderItem
-	Total     float64
-	Discounts float64
-	Products  []Product
+	ID        string      `json:"id"`
+	Items     []OrderItem `json:"items"`
+	Total     float64     `json:"total"`
+	Discounts float64     `json:"discounts"`
+	Products  []Product   `json:"products"`
 }
 
 type OrderItem struct {
-	ProductID string
-	Quantity  int
+	ProductID string `json:"productId"`
+	Quantity  int    `json:"quantity"`
 }

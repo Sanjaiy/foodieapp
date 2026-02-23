@@ -6,8 +6,6 @@ import (
 	"time"
 )
 
-// AuthMiddleware validates the api_key header.
-// Returns 401 if missing, 403 if wrong.
 func AuthMiddleware(validKey string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		apiKey := r.Header.Get("api_key")
@@ -23,18 +21,15 @@ func AuthMiddleware(validKey string, next http.Handler) http.Handler {
 	})
 }
 
-// LoggingMiddleware logs each incoming request.
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		// Wrap response writer to capture status code
 		sw := &statusWriter{ResponseWriter: w, status: http.StatusOK}
 		next.ServeHTTP(sw, r)
 		log.Printf("%s %s %d %s", r.Method, r.URL.Path, sw.status, time.Since(start))
 	})
 }
 
-// CORSMiddleware adds CORS headers for browser compatibility.
 func CORSMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -50,7 +45,6 @@ func CORSMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// statusWriter wraps http.ResponseWriter to capture the status code.
 type statusWriter struct {
 	http.ResponseWriter
 	status int

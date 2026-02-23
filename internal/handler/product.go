@@ -1,11 +1,9 @@
 package handler
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 
-	"github.com/Sanjaiy/foodieapp/internal/dto"
 	"github.com/Sanjaiy/foodieapp/internal/service"
 )
 
@@ -25,7 +23,7 @@ func (h *ProductHandler) ListProducts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, dto.FromDomainProducts(products))
+	writeJSON(w, http.StatusOK, products)
 }
 
 func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
@@ -47,24 +45,5 @@ func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, dto.FromDomainProduct(*product))
-}
-
-// writeJSON writes a JSON response with the given status code.
-func writeJSON(w http.ResponseWriter, status int, data any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		log.Printf("ERROR: encoding response: %v", err)
-	}
-}
-
-// writeError writes a JSON error response.
-func writeError(w http.ResponseWriter, status int, code, message string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(dto.ErrorResponse{
-		Code:    code,
-		Message: message,
-	})
+	writeJSON(w, http.StatusOK, *product)
 }
