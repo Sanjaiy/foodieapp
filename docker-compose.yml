@@ -22,7 +22,7 @@ services:
       dockerfile: Dockerfile.preprocess
     container_name: foodie-preprocess
     volumes:
-      - promodata:/data
+      - ./data:/data
 
   api:
     image: foodie-api:latest
@@ -43,7 +43,7 @@ services:
       API_KEY: apitest
       VALID_CODES_PATH: /data/valid_codes.txt
     volumes:
-      - promodata:/data:ro
+      - ./data:/data:ro
     depends_on:
       db:
         condition: service_healthy
