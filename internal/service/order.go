@@ -73,7 +73,15 @@ func (s *OrderService) PlaceOrder(ctx context.Context, items []domain.OrderItem,
 		total = math.Round((total-discounts)*100) / 100
 	}
 
-	order, err := s.store.CreateOrder(ctx, items, couponCode, products, total, discounts)
+	input := store.CreateOrderInput{
+		Items:      items,
+		CouponCode: couponCode,
+		Products:   products,
+		Total:      total,
+		Discounts:  discounts,
+	}
+
+	order, err := s.store.CreateOrder(ctx, input)
 	if err != nil {
 		log.Printf("ERROR: creating order: %v", err)
 		return nil, fmt.Errorf("failed to create order")

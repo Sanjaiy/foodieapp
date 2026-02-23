@@ -9,17 +9,14 @@ import (
 	"github.com/Sanjaiy/foodieapp/internal/domain"
 )
 
-// ProductStore is the PostgreSQL implementation of store.ProductStore.
 type ProductStore struct {
 	q *db.Queries
 }
 
-// NewProductStore creates a new PostgreSQL-backed product store.
 func NewProductStore(dbConn *sql.DB) *ProductStore {
 	return &ProductStore{q: db.New(dbConn)}
 }
 
-// ListProducts returns all available products.
 func (s *ProductStore) ListProducts(ctx context.Context) ([]domain.Product, error) {
 	rows, err := s.q.ListProducts(ctx)
 	if err != nil {
@@ -33,7 +30,6 @@ func (s *ProductStore) ListProducts(ctx context.Context) ([]domain.Product, erro
 	return products, nil
 }
 
-// GetProduct returns a single product by ID. Returns nil if not found.
 func (s *ProductStore) GetProduct(ctx context.Context, id string) (*domain.Product, error) {
 	row, err := s.q.GetProduct(ctx, id)
 	if err != nil {
@@ -46,7 +42,6 @@ func (s *ProductStore) GetProduct(ctx context.Context, id string) (*domain.Produ
 	return &p, nil
 }
 
-// toProduct converts a sqlcdb.Product to a domain.Product.
 func toProduct(row db.Product) domain.Product {
 	price, _ := strconv.ParseFloat(row.Price, 64)
 	return domain.Product{
