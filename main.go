@@ -16,6 +16,7 @@ import (
 	"github.com/Sanjaiy/foodieapp/internal/config"
 	"github.com/Sanjaiy/foodieapp/internal/database"
 	"github.com/Sanjaiy/foodieapp/internal/handler"
+	"github.com/Sanjaiy/foodieapp/internal/helpers"
 	"github.com/Sanjaiy/foodieapp/internal/service"
 	pgstore "github.com/Sanjaiy/foodieapp/internal/store/postgres"
 )
@@ -37,7 +38,18 @@ func main() {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
 
-	rootHandler := setupApp(dbConn, cfg.APIKey)
+	validCodesPath := os.Getenv("VALID_CODES_PATH")
+	if validCodesPath == "" {
+		validCodesPath = "data/valid_codes.txt"
+	}
+
+	promoLookup, err := helpers.NewCouponLookup(validCodesPath)
+	if err != nil {
+		log.Fatalf("Failed to load promo codes: %v", err)
+	}
+	defer promoLookup.Close()
+
+	rootHandler := setupApp(dbConn, cfg.APIKey, promoLookup)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
@@ -50,8 +62,8 @@ func main() {
 	runServer(srv)
 }
 
-func setupApp(dbConn *sql.DB, apiKey string) http.Handler {
-	promoSvc := service.NewPromoService()
+func setupApp(dbConn *sql.DB, apiKey string, promoLookup *helpers.CouponLookup) http.Handler {
+	promoSvc := service.NewPromoService(promoLookup)
 
 	productStore := pgstore.NewProductStore(dbConn)
 	orderStore := pgstore.NewOrderStore(dbConn)
