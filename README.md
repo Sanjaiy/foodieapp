@@ -20,11 +20,11 @@ This will:
 
 ---
 
-## The Promo Preprocessor
+## The Coupon Preprocessor
 
 ### What It Does
 
-The preprocessor reads 3 coupon source files (`data/coupon1.txt`, `data/coupon2.txt`, `data/coupon3.txt`) and produces a single sorted output file (`data/valid_codes.txt`) containing only the **valid** promo codes.
+The preprocessor reads 3 coupon source files (`data/coupon1.txt`, `data/coupon2.txt`, `data/coupon3.txt`) and produces a single sorted output file (`data/valid_codes.txt`) containing only the **valid** coupon codes.
 
 ### Validity Criteria
 
