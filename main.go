@@ -21,31 +21,40 @@ import (
 )
 
 func main() {
-	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	// Connect to database
 	ctx := context.Background()
-	db, err := database.Connect(ctx, cfg.DatabaseURL)
+	dbConn, err := database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	defer db.Close()
+	defer dbConn.Close()
 
-	// Run migrations
-	if err := runMigrations(db); err != nil {
+	if err := runMigrations(dbConn); err != nil {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
 
-	// Initialize services
+	rootHandler := setupApp(dbConn, cfg.APIKey)
+
+	srv := &http.Server{
+		Addr:         ":" + cfg.Port,
+		Handler:      rootHandler,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	runServer(srv)
+}
+
+func setupApp(dbConn *sql.DB, apiKey string) http.Handler {
 	promoSvc := service.NewPromoService()
 
-	// Initialize stores (DI — inject DB connection)
-	productStore := pgstore.NewProductStore(db)
-	orderStore := pgstore.NewOrderStore(db)
+	productStore := pgstore.NewProductStore(dbConn)
+	orderStore := pgstore.NewOrderStore(dbConn)
 
 	productSvc := service.NewProductService(productStore)
 	orderSvc := service.NewOrderService(orderStore, promoSvc)
@@ -53,44 +62,33 @@ func main() {
 	productHandler := handler.NewProductHandler(productSvc)
 	orderHandler := handler.NewOrderHandler(orderSvc)
 
-	// Setup routes
 	mux := http.NewServeMux()
 
-	// Product routes (public)
 	mux.HandleFunc("GET /api/product", productHandler.ListProducts)
 	mux.HandleFunc("GET /api/product/{productId}", productHandler.GetProduct)
 
-	// Order routes (authenticated)
 	orderMux := http.NewServeMux()
 	orderMux.HandleFunc("POST /api/order", orderHandler.PlaceOrder)
-	mux.Handle("/api/order", handler.AuthMiddleware(cfg.APIKey, orderMux))
+	mux.Handle("/api/order", handler.AuthMiddleware(apiKey, orderMux))
 
-	// Health check
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"status":"ok"}`))
 	})
 
-	// Apply global middleware
 	var root http.Handler = mux
 	root = handler.CORSMiddleware(root)
 	root = handler.LoggingMiddleware(root)
 
-	// Create server
-	srv := &http.Server{
-		Addr:         ":" + cfg.Port,
-		Handler:      root,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
-	}
+	return root
+}
 
-	// Graceful shutdown
+func runServer(srv *http.Server) {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		log.Printf("Server starting on port %s", cfg.Port)
+		log.Printf("Server starting on %s", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server failed: %v", err)
 		}
