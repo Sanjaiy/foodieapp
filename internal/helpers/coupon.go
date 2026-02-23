@@ -15,6 +15,9 @@ type CouponLookup struct {
 func NewCouponLookup(path string) (*CouponLookup, error) {
 	f, err := os.Open(path)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return &CouponLookup{}, nil
+		}
 		return nil, fmt.Errorf("promo lookup open: %w", err)
 	}
 	defer f.Close()
